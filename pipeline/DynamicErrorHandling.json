@@ -1,0 +1,56 @@
+{
+	"name": "DynamicErrorHandling",
+	"properties": {
+		"activities": [
+			{
+				"name": "RunStoredProcedure",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "uspuser"
+				},
+				"linkedServiceName": {
+					"referenceName": "SQLSERVERLinkServices",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "RunStoredProcedure",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ErrorMsg",
+					"value": {
+						"value": "@string(activity('RunStoredProcedure'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"ErrorMsg": {
+				"type": "String"
+			},
+			"ArrayMeaaage": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
