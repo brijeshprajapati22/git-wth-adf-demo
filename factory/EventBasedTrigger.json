@@ -1,0 +1,9 @@
+{
+	"name": "EventBasedTrigger",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "7aba708e-bb6d-437b-bddc-09f6db755067",
+		"tenantId": "cc693677-dbce-4660-bd96-a46ba0199e9e"
+	}
+}

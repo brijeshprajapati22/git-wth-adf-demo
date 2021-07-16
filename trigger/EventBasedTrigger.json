@@ -1,0 +1,29 @@
+{
+	"name": "EventBasedTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "EventTrigger",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"SourcePath": "@triggerBody().folderPath",
+					"SourceFileName": "@triggerBody().fileName"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/adfdemo/blobs/input/",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/35ea27e0-8f51-42c4-ba42-fa597b70aa03/resourceGroups/Training-Demo/providers/Microsoft.Storage/storageAccounts/adlstore2demo",
+			"events": [
+				"Microsoft.Storage.BlobCreated",
+				"Microsoft.Storage.BlobDeleted"
+			]
+		}
+	}
+}

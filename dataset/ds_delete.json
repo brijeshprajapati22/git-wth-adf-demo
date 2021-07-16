@@ -1,0 +1,27 @@
+{
+	"name": "ds_delete",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adlstore2demo_AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"container": "deleteddata"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
