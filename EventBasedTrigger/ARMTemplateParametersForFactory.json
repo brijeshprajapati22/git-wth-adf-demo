@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "EventBasedTrigger"
+		},
+		"CosmosDb1_connectionString": {
+			"value": ""
+		},
+		"SQLSERVERLinkServices_connectionString": {
+			"value": ""
+		},
+		"adlstore2demo_AzureBlobStorage_connectionString": {
+			"value": ""
+		},
+		"EventBasedTrigger_properties_EventTrigger_parameters_SourcePath": {
+			"value": "@triggerBody().folderPath"
+		},
+		"EventBasedTrigger_properties_EventTrigger_parameters_SourceFileName": {
+			"value": "@triggerBody().fileName"
+		},
+		"EventBasedTrigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/35ea27e0-8f51-42c4-ba42-fa597b70aa03/resourceGroups/Training-Demo/providers/Microsoft.Storage/storageAccounts/adlstore2demo"
+		}
+	}
+}

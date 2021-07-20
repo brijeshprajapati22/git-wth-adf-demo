@@ -1,0 +1,408 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "EventBasedTrigger"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DynamicErrorHandling')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "RunStoredProcedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "uspuser"
+						},
+						"linkedServiceName": {
+							"referenceName": "SQLSERVERLinkServices",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Set variable1",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "RunStoredProcedure",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "ErrorMsg",
+							"value": {
+								"value": "@string(activity('RunStoredProcedure'))",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"variables": {
+					"ErrorMsg": {
+						"type": "String"
+					},
+					"ArrayMeaaage": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/StorageToCosmosDBDataCopy')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Cosmosdb Data Copy",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "CosmosDbSqlApiSink",
+								"writeBehavior": "insert"
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDatasetForCosmos",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "CosmosDbSqlApiCollection1",
+								"type": "DatasetReference"
+							}
+						]
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDatasetForCosmos')]",
+				"[concat(variables('factoryId'), '/datasets/CosmosDbSqlApiCollection1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ValidateSchema')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CosmosDbSqlApiCollection1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "CosmosDb1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "CosmosDbSqlApiCollection",
+				"schema": {},
+				"typeProperties": {
+					"collectionName": "Employees"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OutputDAtaset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "adlstore2demo_AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "output",
+						"container": "adfdemo"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "Category",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Error",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDatasetForCosmos')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "adlstore2demo_AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "SampleEmployeeData.csv",
+						"folderPath": "input",
+						"container": "adfdemo"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "String"
+					},
+					{
+						"name": "FirstName",
+						"type": "String"
+					},
+					{
+						"name": "LastName",
+						"type": "String"
+					},
+					{
+						"name": "Gender",
+						"type": "String"
+					},
+					{
+						"name": "EMail",
+						"type": "String"
+					},
+					{
+						"name": "DateOfBirth",
+						"type": "String"
+					},
+					{
+						"name": "WeightInKgs",
+						"type": "String"
+					},
+					{
+						"name": "Salary",
+						"type": "String"
+					},
+					{
+						"name": "PhoneNo",
+						"type": "String"
+					},
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "UserName",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SubCategoryDataSet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "adlstore2demo_AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "subcategory.csv",
+						"folderPath": "input",
+						"container": "adfdemo"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "SubCategoryId",
+						"type": "String"
+					},
+					{
+						"name": "SubCategoryName",
+						"type": "String"
+					},
+					{
+						"name": "StreamId",
+						"type": "String"
+					},
+					{
+						"name": "CategoryId",
+						"type": "String"
+					},
+					{
+						"name": "EDate",
+						"type": "String"
+					},
+					{
+						"name": "EUser",
+						"type": "String"
+					},
+					{
+						"name": "MUser",
+						"type": "String"
+					},
+					{
+						"name": "MDate",
+						"type": "String"
+					},
+					{
+						"name": "ActiveFlag",
+						"type": "String"
+					},
+					{
+						"name": "IpAddress",
+						"type": "String"
+					},
+					{
+						"name": "OrderStart",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "SubCategoryDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "SubCategoryDataFlow"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutputDAtaset",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [],
+					"script": "source(output(\n\t\tSubCategoryId as string,\n\t\tSubCategoryName as string,\n\t\tStreamId as string,\n\t\tCategoryId as string,\n\t\tEDate as string,\n\t\tEUser as string,\n\t\tMUser as string,\n\t\tMDate as string,\n\t\tActiveFlag as string,\n\t\tIpAddress as string,\n\t\tOrderStart as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: true,\n\tignoreNoFilesFound: false) ~> SubCategoryDataFlow\nSubCategoryDataFlow sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tName as string,\n\t\tCategory as string,\n\t\tStatus as string,\n\t\tError as string\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tpartitionBy('hash', 1)) ~> sink1"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SubCategoryDataSet')]",
+				"[concat(variables('factoryId'), '/datasets/OutputDAtaset')]"
+			]
+		}
+	]
+}
