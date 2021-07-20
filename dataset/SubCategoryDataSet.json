@@ -1,0 +1,69 @@
+{
+	"name": "SubCategoryDataSet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adlstore2demo_AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "subcategory.csv",
+				"folderPath": "input",
+				"container": "adfdemo"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "SubCategoryId",
+				"type": "String"
+			},
+			{
+				"name": "SubCategoryName",
+				"type": "String"
+			},
+			{
+				"name": "StreamId",
+				"type": "String"
+			},
+			{
+				"name": "CategoryId",
+				"type": "String"
+			},
+			{
+				"name": "EDate",
+				"type": "String"
+			},
+			{
+				"name": "EUser",
+				"type": "String"
+			},
+			{
+				"name": "MUser",
+				"type": "String"
+			},
+			{
+				"name": "MDate",
+				"type": "String"
+			},
+			{
+				"name": "ActiveFlag",
+				"type": "String"
+			},
+			{
+				"name": "IpAddress",
+				"type": "String"
+			},
+			{
+				"name": "OrderStart",
+				"type": "String"
+			}
+		]
+	}
+}
